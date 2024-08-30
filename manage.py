@@ -2,7 +2,6 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-from dotenv import load_dotenv
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -19,11 +18,9 @@ from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from azure.monitor.opentelemetry.exporter import AzureMonitorLogExporter, AzureMonitorTraceExporter
 from events import MyEventLoggerProvider
 
-resource = Resource.create({SERVICE_NAME: "chat"})
-
 def configure_tracing() -> TracerProvider:
-    provider = TracerProvider(resource=resource)
-    # provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4317")))
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter()))
     # provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
     provider.add_span_processor(SimpleSpanProcessor(AzureMonitorTraceExporter()))
     trace.set_tracer_provider(provider)
@@ -31,8 +28,8 @@ def configure_tracing() -> TracerProvider:
 
 
 def configure_logging():
-    provider = LoggerProvider(resource=resource)
-    # provider.add_log_record_processor(SimpleLogRecordProcessor(OTLPLogExporter(endpoint="http://localhost:4317")))
+    provider = LoggerProvider()
+    provider.add_log_record_processor(SimpleLogRecordProcessor(OTLPLogExporter()))
     #provider.add_log_record_processor(SimpleLogRecordProcessor(ConsoleLogExporter()))
     provider.add_log_record_processor(SimpleLogRecordProcessor(AzureMonitorLogExporter()))
     event_provider = MyEventLoggerProvider(provider)
@@ -41,7 +38,6 @@ def configure_logging():
     return (provider, event_provider)
 
 def main():
-    load_dotenv()
     configure_tracing()
     configure_logging()
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "chat.settings")
