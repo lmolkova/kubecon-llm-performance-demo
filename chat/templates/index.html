@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <form id="textForm" method="POST" action="/chat_page">
+        {% csrf_token %}
+        <label for="prompt">Prompt:</label><br>
+        <input type="text" id="prompt" name="prompt" required><br><br>
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
