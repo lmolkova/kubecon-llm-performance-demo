@@ -39,22 +39,23 @@ def _chat(prompt):
 
     return content
 
+@csrf_exempt
 def feedback_page(request):
     (score, response_id) = _record_feedback(request.POST.get('feedback'),
                     request.POST.get('response_id'),
-                    int(request.POST.get('trace_id')),
-                    int(request.POST.get('span_id')))
+                    int(request.POST.get('trace_id', 0)),
+                    int(request.POST.get('span_id', 0)))
 
     return HttpResponse(f"Feedback received: score = {score}, response_id = {response_id}")
 
-
+@csrf_exempt
 def feedback(request):
     (score, response_id) = _record_feedback(request.GET.get('feedback'),
                     request.GET.get('response_id'),
-                    int(request.GET.get('trace_id')),
-                    int(request.GET.get('span_id')))
+                    int(request.GET.get('trace_id', 0)),
+                    int(request.GET.get('span_id', 0)))
 
-    return HttpResponse(f"Feedback received: score = {score}, response_id = {response_id}, trace_id = {request.GET.get('trace_id')}, span_id = {request.GET.get('span_id')}")
+    return HttpResponse(f"Feedback received: score = {score}, response_id = {response_id}")
 
 def _record_feedback(feedback, response_id, trace_id, span_id):
     score = None
