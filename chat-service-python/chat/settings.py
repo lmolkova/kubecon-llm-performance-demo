@@ -24,7 +24,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = "chat.urls"
 
 INSTALLED_APPS = [
-   'chat',
+    'chat',
 ]
 
 SETTINGS_PATH = os.path.normpath(os.path.dirname(__file__))
@@ -45,5 +45,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "chat.wsgi.application"
 
-OPENAI_CLIENT = OpenAI()
-EVENT_LOGGER = get_event_logger("chat", version="1.0.0")
+OPENAI_CLIENT = OpenAI(
+    base_url=os.environ.get('OPENAI_API_BASE_URL'),
+)
+
+MODEL = os.environ.get('MODEL')

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body>
+    {% if completion %}
+        <p><strong>Prompt:</strong> {{ prompt }}</p>
+        <p><strong>Completion:</strong> {{ completion }}</p>
+        <p/>
+        <p/>
+        <p/>
+        <p><small>response_id {{ metadata.response_id }}</small></p>
+    {% endif %}
+</body>
+</html>
