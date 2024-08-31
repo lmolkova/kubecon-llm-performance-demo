@@ -48,3 +48,13 @@ API access:
   }
    ```
 3. You can check generated telemetry in Aspire dashboard (http://localhost:18888) included in docker-compose
+
+
+## Chat apps
+
+There are two chat apps with very similar functionality, one in Python another in .NET.
+Python one runs on port 8085, .NET on port 8084.
+
+Python one has some issues with telemetry:
+- no HTTP or GenAI client metrics (yet)
+- some (probably fixable) problems with HTTP server metrics - the histogram boundaries are wrong.
