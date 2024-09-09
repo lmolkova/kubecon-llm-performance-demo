@@ -58,3 +58,21 @@ Python one runs on port 8085, .NET on port 8084.
 Python one has some issues with telemetry:
 - no HTTP or GenAI client metrics (yet)
 - some (probably fixable) problems with HTTP server metrics - the histogram boundaries are wrong.
+
+## Run vLLM on CPU
+
+To run, vLLM on CPU instead of GPU, you need to build the vLLM CPU docker image using the
+following commands.
+
+```
+git clone https://github.com/vllm-project/vllm.git
+cd vllm
+docker build -f Dockerfile.cpu -t vllm-cpu-env --shm-size=4g .
+```
+
+Once you have the vLLM image, you can run the following to bring up the vLLM
+container along with the client applications.
+
+```
+docker-compose -f docker-compose-vllm-cpu.yaml up
+```
