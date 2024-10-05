@@ -118,6 +118,106 @@
           "x": 0,
           "y": 0
         },
+        "id": 1,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${DS_PROMETHEUS}"
+            },
+            "disableTextWrap": false,
+            "editorMode": "code",
+            "expr": "sum by (error_type) (rate(gen_ai_client_operation_duration_count[$__rate_interval]))",
+            "fullMetaSearch": false,
+            "includeNullMetadata": true,
+            "instant": false,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A",
+            "useBackend": false
+          }
+        ],
+        "title": "GenAI operation (success and error), rps",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
         "id": 4,
         "options": {
           "legend": {
@@ -211,8 +311,8 @@
         "gridPos": {
           "h": 8,
           "w": 12,
-          "x": 12,
-          "y": 0
+          "x": 0,
+          "y": 8
         },
         "id": 2,
         "options": {
@@ -333,10 +433,10 @@
         "gridPos": {
           "h": 8,
           "w": 12,
-          "x": 0,
+          "x": 12,
           "y": 8
         },
-        "id": 1,
+        "id": 3,
         "options": {
           "legend": {
             "calcs": [],
@@ -355,19 +455,15 @@
               "type": "prometheus",
               "uid": "${DS_PROMETHEUS}"
             },
-            "disableTextWrap": false,
             "editorMode": "code",
-            "expr": "sum by (error_type) (rate(gen_ai_client_operation_duration_count[$__rate_interval]))",
-            "fullMetaSearch": false,
-            "includeNullMetadata": true,
+            "expr": "histogram_quantile(0.99, sum(rate(gen_ai_client_token_usage_bucket[$__rate_interval])) by (le, gen_ai_token_type))",
             "instant": false,
-            "legendFormat": "__auto",
+            "legendFormat": "p99 {{gen_ai_token_type}} token usage",
             "range": true,
-            "refId": "A",
-            "useBackend": false
+            "refId": "A"
           }
         ],
-        "title": "GenAI operation (success and error), rps",
+        "title": "GenAI client token usage distribution",
         "type": "timeseries"
       },
       {
@@ -426,17 +522,18 @@
                   "value": 80
                 }
               ]
-            }
+            },
+            "unit": "%"
           },
           "overrides": []
         },
         "gridPos": {
           "h": 8,
           "w": 12,
-          "x": 12,
-          "y": 8
+          "x": 0,
+          "y": 16
         },
-        "id": 3,
+        "id": 5,
         "options": {
           "legend": {
             "calcs": [],
@@ -456,43 +553,128 @@
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
-            "expr": "histogram_quantile(0.99, sum(rate(gen_ai_client_token_usage_bucket[$__rate_interval])) by (le, gen_ai_token_type))",
+            "expr": "avg(container_cpu_utilization{container_name=\"vllm\"})",
             "instant": false,
-            "legendFormat": "p99 {{gen_ai_token_type}} token usage",
+            "legendFormat": "avg",
             "range": true,
             "refId": "A"
+          }
+        ],
+        "title": "vLLM CPU utilization",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "bytes"
           },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "id": 6,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
           {
             "datasource": {
               "type": "prometheus",
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
-            "expr": "histogram_quantile(0.50, sum(rate(gen_ai_client_token_usage_bucket[$__rate_interval])) by (le, gen_ai_token_type))",
-            "hide": false,
+            "expr": "avg(container_memory_usage_total{container_name=\"vllm\"})",
             "instant": false,
-            "legendFormat": "p50 {{gen_ai_token_type}} token usage",
+            "legendFormat": "avg",
             "range": true,
-            "refId": "B"
+            "refId": "A"
           }
         ],
-        "title": "GenAI client token usage distribution",
+        "title": "vLLM memory usage",
         "type": "timeseries"
       }
     ],
+    "refresh": "",
     "schemaVersion": 39,
     "tags": [],
     "templating": {
       "list": []
     },
     "time": {
-      "from": "now-1h",
+      "from": "now-15m",
       "to": "now"
     },
     "timepicker": {},
     "timezone": "browser",
     "title": "GenAI client",
     "uid": "bdzzir8zudn28d",
-    "version": 1,
+    "version": 2,
     "weekStart": ""
   }

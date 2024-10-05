@@ -1,4 +1,8 @@
 receivers:
+  docker_stats:
+    #api_version: 1.41
+    env_vars_to_metric_labels:
+      OTEL_SERVICE_NAME: service.name
   otlp:
     protocols:
       http:
@@ -22,6 +26,6 @@ processors:
 service:
   pipelines:
     metrics:
-      receivers: [otlp]
+      receivers: [docker_stats, otlp]
       processors: [batch, resourcedetection/docker]
       exporters: [prometheus]
