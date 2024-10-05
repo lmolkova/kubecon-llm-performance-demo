@@ -35,7 +35,11 @@ def configure_tracing() -> TracerProvider:
     return provider
 
 def configure_metrics() -> MeterProvider:
-    provider = MeterProvider(metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())])
+    metrics_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT2")
+    provider = MeterProvider(metric_readers=[
+        PeriodicExportingMetricReader(OTLPMetricExporter()),
+        PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=metrics_endpoint)),
+    ])
     metrics.set_meter_provider(provider)
     return provider
 

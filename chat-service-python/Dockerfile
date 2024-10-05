@@ -1,7 +1,7 @@
 FROM python:3.11
 
 EXPOSE  8085
-RUN apt-get update && apt-get install -y git && apt-get clean
+RUN apt-get update && apt-get install -y git && apt-get -y install curl && apt-get clean
 WORKDIR /app
 COPY ./chat-service-python /app
 
