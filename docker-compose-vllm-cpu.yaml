@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+  vllm:
+    image: vllm-cpu-env
+    deploy:
+      resources:
+        reservations:
+          cpus: '16.0'
+          memory: 32G
+    ports:
+        - 8000:8000
+    command: --model facebook/opt-125m --chat-template examples/template_falcon_180b.jinja
+  chat-python:
+    build:
+      context: .
+      dockerfile: ./chat-service-python/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
+      - OTEL_SERVICE_NAME=chat
+      - OTEL_SEMCONV_STABILITY_OPT_IN=http
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
+      - OPENAI_API_KEY=token123
+      - OPENAI_API_BASE_URL=http://vllm:8000/v1
+      - MODEL=facebook/opt-125m
+  chat-dotnet:
+    build:
+      context: .
+      dockerfile: ./chat-service-dotnet/Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
+      - OTEL_SERVICE_NAME=chat
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
+      - ASPNETCORE_URLS=http://+:8084
+      - OpenAI__ApiKey=token123
+      - OpenAI__Endpoint=http://vllm:8000
+      - OpenAI__Model=facebook/opt-125m
+  aspire:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.1.0
+    ports:
+      - "18888:18888"
+      - "4317:18889"
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+
