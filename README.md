@@ -49,7 +49,6 @@ API access:
    ```
 3. You can check generated telemetry in Aspire dashboard (http://localhost:18888) included in docker-compose
 
-
 ## Chat apps
 
 There are two chat apps with very similar functionality, one in Python another in .NET.
@@ -76,3 +75,10 @@ container along with the client applications.
 ```
 docker-compose -f docker-compose-vllm-cpu.yaml up
 ```
+
+## Checking telemetry
+
+1. **Aspire** Traces, metrics, and logs are exported to local Aspire dashboard available at http://localhost:18888. Best for logs and traces
+2. **Prometheus** Metrics are additionally exported to Prometheus on http://localhost:9090. Nothing good to see there
+3. **Grafana** shows nice UX for Prometheus metrics at http://localhost:3003. You'll need to import [GenAI client dashboard](./grafana/gen-ai-client-dashboard.json) to see
+   ![image](./docs/images/grafana.png)

@@ -26,6 +26,6 @@ public class Index : PageModel
 
         var completion = await _chat.GetCompletion(Prompt, cancellationToken);
 
-        return new RedirectToPageResult("/chat", new { prompt = Prompt, completion = completion.Content[0].Text });
+        return new RedirectToPageResult("/chat", new { prompt = Prompt, completion = completion.Value.Content[0].Text });
     }
 }

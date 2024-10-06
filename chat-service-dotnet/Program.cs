@@ -11,23 +11,21 @@ AppContext.SetSwitch("OpenAI.Experimental.EnableOpenTelemetry", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+var metricsEndpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT2"));
 builder.Services.AddOpenTelemetry()
     .WithTracing(b =>
-    {
         b.AddSource("OpenAI*")
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation()
-        .AddOtlpExporter();
-    })
+        .AddOtlpExporter())
     .WithMetrics(b =>
-    {
         b.AddMeter("OpenAI*")
-        .AddView("gen_ai.client.operation.duration", new ExplicitBucketHistogramConfiguration { 
+        .AddView("gen_ai.client.operation.duration", new ExplicitBucketHistogramConfiguration {
             Boundaries = [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12,10.24, 20.48, 40.96, 81.92]})
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation()
-        .AddOtlpExporter();
-    });
+        .AddOtlpExporter()
+        .AddOtlpExporter(o => o.Endpoint = metricsEndpoint));
 
 builder.Logging.AddOpenTelemetry(o =>
 {

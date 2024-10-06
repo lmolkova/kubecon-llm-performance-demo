@@ -9,40 +9,112 @@ services:
           memory: 32G
     ports:
         - 8000:8000
+    environment:
+      - VLLM_LOGGING_LEVEL=WARN
     command: --model facebook/opt-125m --chat-template examples/template_falcon_180b.jinja
   chat-python:
     build:
       context: .
       dockerfile: ./chat-service-python/Dockerfile
+    container_name: chat-python
     ports:
       - "8085:8085"
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
+      - OTEL_EXPORTER_OTLP_ENDPOINT2=http://otelcollector:4417
       - OTEL_SERVICE_NAME=chat
       - OTEL_SEMCONV_STABILITY_OPT_IN=http
       - OTEL_METRIC_EXPORT_INTERVAL=5000
       - OPENAI_API_KEY=token123
       - OPENAI_API_BASE_URL=http://vllm:8000/v1
       - MODEL=facebook/opt-125m
+    depends_on:
+      - vllm
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://chat-python:8085/chat?prompt=tell%20me%20a%20joke"]
+        interval: 10s
+        timeout: 10s
+        retries: 3
+        start_period: 10s
   chat-dotnet:
     build:
       context: .
       dockerfile: ./chat-service-dotnet/Dockerfile
+    container_name: chat-dotnet
     ports:
       - "8084:8084"
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
+      - OTEL_EXPORTER_OTLP_ENDPOINT2=http://otelcollector:4417
       - OTEL_SERVICE_NAME=chat
       - OTEL_METRIC_EXPORT_INTERVAL=5000
       - ASPNETCORE_URLS=http://+:8084
       - OpenAI__ApiKey=token123
-      - OpenAI__Endpoint=http://vllm:8000
+      - OpenAI__Endpoint=http://vllm:8000/v1
       - OpenAI__Model=facebook/opt-125m
+    depends_on:
+      - vllm
+    healthcheck:
+        test: ["CMD", "curl", "-f", "-X", "POST", "http://chat-dotnet:8084/chat?prompt=tell%20me%20a%20joke"]
+        interval: 10s
+        timeout: 10s
+        retries: 3
+        start_period: 10s
+  load:
+    build:
+      context: .
+      dockerfile: ./loadgenerator/Dockerfile
+    container_name: load
+    # load is generated with bombardier (https://github.com/codesenberg/bombardier)
+    # bombardier --help
+    command: ["-c", "2", "-d", "24h", "-r", "100", "-m", "POST", "http://chat-dotnet:8084/chat?prompt=tell%20me%20a%20joke"]
+    # sends max 100 requests per second for 24 hours using 2 connections to chat-dotnet
+    depends_on:
+      chat-dotnet:
+        condition: service_healthy
+      chat-python:
+        condition: service_healthy
   aspire:
-    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.1.0
+    image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest
+    container_name: aspire
     ports:
       - "18888:18888"
       - "4317:18889"
     environment:
       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
-
+  otelcollector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otelcollector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    ports:
+      - "8889:8889"
+      - "4417:4317"
+      - "4418:4318"
+    volumes:
+      - //var/run/docker.sock:/var/run/docker.sock
+      - ./configs/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./configs/prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3003:3000
+    restart: unless-stopped
+    environment:
+      - GF_LOG_LEVEL=warn
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+      - grafana-storage:/var/lib/grafana
+volumes:
+  grafana-storage: {}

@@ -8,15 +8,15 @@ namespace chat_service_dotnet;
 public class ChatController : ControllerBase
 {
     private readonly ChatService _chat;
-    public ChatController(ChatService chat) 
-    { 
+    public ChatController(ChatService chat)
+    {
         _chat = chat;
-    } 
+    }
 
     [HttpPost]
     [Produces("application/json")]
-    public Task<ChatCompletion> CreateCompletion([FromQuery]string prompt, CancellationToken cancellationToken)
+    public async Task<ChatCompletion> CreateCompletion([FromQuery]string prompt, CancellationToken cancellationToken)
     {
-        return _chat.GetCompletion(prompt, cancellationToken);
+        return (await _chat.GetCompletion(prompt, cancellationToken)).Value;
     }
 }

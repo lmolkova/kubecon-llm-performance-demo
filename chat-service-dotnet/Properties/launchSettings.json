@@ -10,7 +10,7 @@
         "OpenAI__Model":"facebook/opt-125m"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "http://localhost:8084"
+      "applicationUrl": "http://*:8084"
     }
   }
 }

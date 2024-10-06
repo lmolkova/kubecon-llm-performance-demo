@@ -6,7 +6,7 @@ from opentelemetry._events import get_event_logger
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-kl^t0c0l42fyt=usm+u(4j2e@v9@6gygw2n%dh%m3x#nr!1*(-"
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
