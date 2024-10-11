@@ -16,7 +16,9 @@ services:
         - 8000:8000
     environment:
       - VLLM_LOGGING_LEVEL=WARN
-    command: --model facebook/opt-125m --disable-log-requests
+    command: --model facebook/opt-125m --disable-log-requests --chat-template /etc/chat.template.j2
+    volumes:
+      - ./configs/chat.template.j2:/etc/chat.template.j2
   chat-python:
     build:
       context: .
@@ -59,12 +61,7 @@ services:
       - OpenAI__Model=facebook/opt-125m
     depends_on:
       - vllm
-    healthcheck:
-        test: ["CMD", "curl", "-f", "-X", "POST", "http://chat-dotnet:8084/chat?prompt=tell%20me%20a%20joke"]
-        interval: 10s
-        timeout: 10s
-        retries: 3
-        start_period: 10s
+
   load:
     build:
       context: .
@@ -72,11 +69,9 @@ services:
     container_name: load
     # load is generated with bombardier (https://github.com/codesenberg/bombardier)
     # bombardier --help
-    command: ["-c", "2", "-d", "24h", "-r", "100", "-m", "POST", "http://chat-dotnet:8084/chat?prompt=tell%20me%20a%20joke"]
+    command: ["-c", "2", "-d", "24h", "-r", "100", "-m", "GET", "http://chat-python:8085/chat?prompt=tell%20me%20a%20joke"]
     # sends max 100 requests per second for 24 hours using 2 connections to chat-dotnet
     depends_on:
-      chat-dotnet:
-        condition: service_healthy
       chat-python:
         condition: service_healthy
   aspire:
