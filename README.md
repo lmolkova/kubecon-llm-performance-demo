@@ -82,3 +82,94 @@ docker-compose -f docker-compose-vllm-cpu.yaml up
 2. **Prometheus** Metrics are additionally exported to Prometheus on http://localhost:9090. Nothing good to see there
 3. **Grafana** shows nice UX for Prometheus metrics at http://localhost:3003. You'll need to import [GenAI client dashboard](./grafana/gen-ai-client-dashboard.json) to see
    ![image](./docs/images/grafana.png)
+
+## Run on a Kind cluster
+
+1. Install kubectl
+```
+curl -LO https://dl.k8s.io/release/v1.24.12/bin/linux/amd64/kubectl
+chmod +x kubectl
+mv kubectl /usr/bin/
+```
+
+2. Install helm
+```
+wget https://get.helm.sh/helm-v3.11.3-linux-amd64.tar.gz
+tar -xvzf helm-v3.11.3-linux-amd64.tar.gz
+mv linux-amd64/helm /usr/bin/
+```
+
+3. Install kind from a fork because GPU support is not available in the official one yet.
+```
+git clone -b gpu https://github.com/jacobtomlinson/kind
+cd kind
+make build
+mv bin/kind /usr/bin/
+```
+
+4. Start a kind cluster with GPU using the following steps and install nvidia gpu operator.
+```
+kind create cluster --config kubernetes/kind-gpu.yaml
+
+# Install nvidia operator
+helm repo add nvidia https://nvidia.github.io/gpu-operator
+helm repo update
+helm install nvidia/gpu-operator \
+  --wait --generate-name \
+  --create-namespace -n gpu-operator \
+  --set driver.enabled=false \
+  --set mig.strategy=none \
+  --version 23.3.1
+```
+
+5. Deploy vllm
+```
+kubectl apply -f vllm.yaml
+```
+
+6. Deploy prometheus.
+```
+# Install Prometheus CRDs
+LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
+curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/${LATEST}/bundle.yaml | kubectl create -f -
+
+# Check if it is complete
+kubectl wait --for=condition=Ready pods -l  app.kubernetes.io/name=prometheus-operator -n default
+
+# Deploy prometheus
+kubectl apply -f pod-monitor.yaml
+
+# Query prometheus to make sure vllm metrics are available from inside a pod in the kind cluster
+kubectl exec -it ${vllm-pod-name} -- bash
+curl -g 'http://${PROMETHEUS_POD_IP}:9090/api/v1/series?' --data-urlencode 'match[]=vllm:num_requests_waiting' | jq
+curl -g 'http://${PROMETHEUS_POD_IP}:9090/api/v1/series?' --data-urlencode 'match[]=vllm:gpu_cache_usage_perc' | jq
+
+# Install prometheus adapter
+kubectl apply -f prometheus-adapter.yaml
+kubectl rollout restart deployment prometheus-adapter
+
+# Verify that the custom metrics are queryable
+kubectl get --raw /apis/custom.metrics.k8s.io/v1beta2
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta2/namespaces/default/pods/*/vllm_num_requests_running"
+```
+
+6. Setup vllm to autoscale
+```
+kubectl apply -f hpa.yaml
+```
+
+7. Generate load using benchmarking
+```
+git clone git@github.com:vllm-project/vllm.git
+cd vllm/benchmarks
+wget https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/ShareGPT_V3_unfiltered_cleaned_split.json
+
+# Create vitrualenv before running the pip install commands below
+pip install numpy aiohttp huggingface_hub transformers datasets Pillow
+python3 benchmark_serving.py --model=tiiuae/falcon-7b --dataset-path=ShareGPT_V3_unfiltered_cleaned_split.json --dataset-name=sharegpt --tokenizer=tiiuae/falcon-7b --num-prompts=5000 --request-rate=50
+```
+
+8. Watch it autoscale
+```
+kubectl describe hpa
+```

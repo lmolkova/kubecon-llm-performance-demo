@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+    spec:
+      containers:
+      - name: inference-server
+        image: vllm/vllm-openai:v0.5.5
+        ports:
+        - name: http
+          containerPort: 8000
+          hostPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
+        args:
+        - --model=tiiuae/falcon-7b # facebook/opt-125m
+        - --tensor-parallel-size=1
+        env:
+        - name: PORT
+          value: "8000"
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: dshm
+        - mountPath: /data
+          name: data
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      - name: data
+        hostPath:
+          path: /data
