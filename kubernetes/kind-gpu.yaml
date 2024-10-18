@@ -11,29 +11,29 @@ nodes:
     extraPortMappings:
     - containerPort: 8000
       hostPort: 8000
-      listenAddress: "127.0.0.1"
+      listenAddress: "0.0.0.0"
       protocol: TCP
     - containerPort: 9090
       hostPort: 9090
-      listenAddress: "127.0.0.1"
+      listenAddress: "0.0.0.0"
       protocol: TCP
     - containerPort: 3000
       hostPort: 3000
-      listenAddress: "127.0.0.1"
+      listenAddress: "0.0.0.0"
       protocol: TCP
     - containerPort: 18888
       hostPort: 18888
-      listenAddress: "127.0.0.1"
+      listenAddress: "0.0.0.0"
       protocol: TCP
     - containerPort: 30900
       hostPort: 30900
-      listenAddress: "127.0.0.1"
+      listenAddress: "0.0.0.0"
       protocol: TCP
     - containerPort: 30901
       hostPort: 30901
-      listenAddress: "127.0.0.1"
+      listenAddress: "0.0.0.0"
       protocol: TCP
     - containerPort: 30902
       hostPort: 30902
-      listenAddress: "127.0.0.1"
+      listenAddress: "0.0.0.0"
       protocol: TCP

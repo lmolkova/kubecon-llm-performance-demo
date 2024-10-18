@@ -110,6 +110,7 @@ rules:
   - list
   - watch
 ---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
@@ -151,7 +152,7 @@ spec:
         - --cert-dir=/var/run/serving-cert
         - --config=/etc/adapter/config.yaml
         - --metrics-relist-interval=1m
-        - --prometheus-url=http://${PROMETHEUS_IP}:9090/
+        - --prometheus-url=http://prometheus:9090/
         - --secure-port=6443
         - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,TLS_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA
         image: registry.k8s.io/prometheus-adapter/prometheus-adapter:v0.12.0
@@ -318,3 +319,17 @@ data:
         name:
           as: "vllm_gpu_cache_usage_perc"
         metricsQuery: "avg_over_time(<<.Series>>[1m])"
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1beta2.custom.metrics.k8s.io
+spec:
+  group: custom.metrics.k8s.io
+  groupPriorityMinimum: 100
+  insecureSkipTLSVerify: true
+  service:
+    name: prometheus-adapter
+    namespace: default
+  version: v1beta2
+  versionPriority: 100
