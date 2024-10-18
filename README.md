@@ -139,10 +139,9 @@ kubectl wait --for=condition=Ready pods -l  app.kubernetes.io/name=prometheus-op
 # Deploy prometheus
 kubectl apply -f pod-monitor.yaml
 
-# Query prometheus to make sure vllm metrics are available from inside a pod in the kind cluster
-kubectl exec -it ${vllm-pod-name} -- bash
-curl -g 'http://${PROMETHEUS_POD_IP}:9090/api/v1/series?' --data-urlencode 'match[]=vllm:num_requests_waiting' | jq
-curl -g 'http://${PROMETHEUS_POD_IP}:9090/api/v1/series?' --data-urlencode 'match[]=vllm:gpu_cache_usage_perc' | jq
+# Query prometheus to make sure vllm metrics are available
+curl -g 'http://localhost:30901/api/v1/series?' --data-urlencode 'match[]=vllm:num_requests_waiting' | jq
+curl -g 'http://localhost:30901/api/v1/series?' --data-urlencode 'match[]=vllm:gpu_cache_usage_perc' | jq
 
 # Install prometheus adapter
 kubectl apply -f prometheus-adapter.yaml
@@ -166,10 +165,18 @@ wget https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/r
 
 # Create vitrualenv before running the pip install commands below
 pip install numpy aiohttp huggingface_hub transformers datasets Pillow
-python3 benchmark_serving.py --model=tiiuae/falcon-7b --dataset-path=ShareGPT_V3_unfiltered_cleaned_split.json --dataset-name=sharegpt --tokenizer=tiiuae/falcon-7b --num-prompts=5000 --request-rate=50
+python3 benchmark_serving.py --model=tiiuae/falcon-7b --dataset-path=ShareGPT_V3_unfiltered_cleaned_split.json --dataset-name=sharegpt --tokenizer=tiiuae/falcon-7b --num-prompts=5000 --request-rate=10 --port=30900
 ```
 
 8. Watch it autoscale
 ```
 kubectl describe hpa
 ```
+
+9. Visualize the metrics
+You can access Prometheus at http://localhost:30901
+You can access Grafana at http://localhost:3000
+
+10. Create a grafana dashboard for vllm metrics
+You can import `grafana/gen-ai-server-dashboard.json` via the grafana ui to see
+vllm metrics and how it changes with autoscaling.

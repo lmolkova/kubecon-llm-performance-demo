@@ -19,6 +19,7 @@ spec:
         ports:
         - name: web
           containerPort: 3000
+          hostPort: 3000
         env:
         - name: GF_LOG_LEVEL
           value: "WARN"
@@ -36,4 +37,4 @@ spec:
       volumes:
       - name: data
         hostPath:
-          path: /data/grafana # /kubecon/grafana
+          path: /data/grafana
