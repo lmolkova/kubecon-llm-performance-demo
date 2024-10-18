@@ -7,7 +7,7 @@
         "OTEL_SERVICE_NAME": "chat",
         "OpenAI__ApiKey":"token123",
         "OpenAI__Endpoint": "http://localhost:8000",
-        "OpenAI__Model":"facebook/opt-125m"
+        "OpenAI__Model":"tiiuae/falcon-7b"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://*:8084"
