@@ -38,7 +38,7 @@ API access:
       "functionCall": null,
       "refusal": null,
       "id": "cmpl-a9fd4f1697de4536a82ce39eba880b88",
-      "model": "facebook/opt-125m",
+      "model": "tiiuae/falcon-7b",
       "systemFingerprint": null,
       "usage": {
         "outputTokens": 184,

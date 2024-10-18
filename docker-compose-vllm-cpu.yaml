@@ -11,7 +11,7 @@ services:
         - 8000:8000
     environment:
       - VLLM_LOGGING_LEVEL=WARN
-    command: --model facebook/opt-125m --chat-template examples/template_falcon_180b.jinja
+    command: --model tiiuae/falcon-7b --tensor-parallel-size=1
   chat-python:
     build:
       context: .
@@ -21,13 +21,12 @@ services:
       - "8085:8085"
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
-      - OTEL_EXPORTER_OTLP_ENDPOINT2=http://otelcollector:4417
       - OTEL_SERVICE_NAME=chat
       - OTEL_SEMCONV_STABILITY_OPT_IN=http
       - OTEL_METRIC_EXPORT_INTERVAL=5000
       - OPENAI_API_KEY=token123
       - OPENAI_API_BASE_URL=http://vllm:8000/v1
-      - MODEL=facebook/opt-125m
+      - MODEL=${MODEL}
     depends_on:
       - vllm
     healthcheck:
@@ -45,13 +44,12 @@ services:
       - "8084:8084"
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
-      - OTEL_EXPORTER_OTLP_ENDPOINT2=http://otelcollector:4417
       - OTEL_SERVICE_NAME=chat
       - OTEL_METRIC_EXPORT_INTERVAL=5000
       - ASPNETCORE_URLS=http://+:8084
       - OpenAI__ApiKey=token123
       - OpenAI__Endpoint=http://vllm:8000/v1
-      - OpenAI__Model=facebook/opt-125m
+      - OpenAI__Model=${MODEL}
     depends_on:
       - vllm
     healthcheck:
@@ -82,17 +80,6 @@ services:
       - "4317:18889"
     environment:
       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
-  otelcollector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: otelcollector
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    ports:
-      - "8889:8889"
-      - "4417:4317"
-      - "4418:4318"
-    volumes:
-      - //var/run/docker.sock:/var/run/docker.sock
-      - ./configs/otel-collector-config.yaml:/etc/otel-collector-config.yaml
   prometheus:
     image: prom/prometheus
     container_name: prometheus
