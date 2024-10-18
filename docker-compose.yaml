@@ -16,7 +16,7 @@ services:
         - 8000:8000
     environment:
       - VLLM_LOGGING_LEVEL=WARN
-    command: --model facebook/opt-125m --disable-log-requests --chat-template /etc/chat.template.j2
+    command: --model facebook/opt-125m --chat-template /etc/chat.template.j2 --trust-remote-code
     volumes:
       - ./configs/chat.template.j2:/etc/chat.template.j2
   chat-python:
@@ -26,9 +26,9 @@ services:
     container_name: chat-python
     ports:
       - "8085:8085"
+      - "9086:9086"
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
-      - OTEL_EXPORTER_OTLP_ENDPOINT2=http://otelcollector:4417
       - OTEL_SERVICE_NAME=chat
       - OTEL_SEMCONV_STABILITY_OPT_IN=http
       - OTEL_METRIC_EXPORT_INTERVAL=5000
@@ -52,7 +52,6 @@ services:
       - "8084:8084"
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire:18889
-      - OTEL_EXPORTER_OTLP_ENDPOINT2=http://otelcollector:4417
       - OTEL_SERVICE_NAME=chat
       - OTEL_METRIC_EXPORT_INTERVAL=5000
       - ASPNETCORE_URLS=http://+:8084
@@ -69,7 +68,7 @@ services:
     container_name: load
     # load is generated with bombardier (https://github.com/codesenberg/bombardier)
     # bombardier --help
-    command: ["-c", "2", "-d", "24h", "-r", "100", "-m", "GET", "http://chat-python:8085/chat?prompt=tell%20me%20a%20joke"]
+    command: ["-c", "2", "-d", "24h", "-r", "100", "-m", "POST", "http://chat-dotnet:8084/chat?prompt=tell%20me%20a%20joke"]
     # sends max 100 requests per second for 24 hours using 2 connections to chat-dotnet
     depends_on:
       chat-python:

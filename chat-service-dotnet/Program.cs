@@ -11,7 +11,6 @@ AppContext.SetSwitch("OpenAI.Experimental.EnableOpenTelemetry", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-var metricsEndpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT2"));
 builder.Services.AddOpenTelemetry()
     .WithTracing(b =>
         b.AddSource("OpenAI*")
@@ -25,7 +24,7 @@ builder.Services.AddOpenTelemetry()
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation()
         .AddOtlpExporter()
-        .AddOtlpExporter(o => o.Endpoint = metricsEndpoint));
+        .AddPrometheusExporter());
 
 builder.Logging.AddOpenTelemetry(o =>
 {
@@ -47,7 +46,9 @@ builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 app.UseRouting();
+
 app.MapRazorPages();
 app.MapControllers();
 

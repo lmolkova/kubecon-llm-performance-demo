@@ -4,3 +4,12 @@ scrape_configs:
     static_configs:
       - targets: ['otelcollector:8889']
       - targets: ['otelcollector:8888']
+  - job_name: 'dotnet'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['chat-dotnet:8084']
+
+  - job_name: 'python'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['chat-python:9086']
