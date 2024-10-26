@@ -23,23 +23,24 @@ spec:
             nvidia.com/gpu: 1
         command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
         args:
-        - --model=tiiuae/falcon-7b # facebook/opt-125m
+        - --model=tiiuae/falcon-7b-instruct # facebook/opt-125m
         - --tensor-parallel-size=1
+        - --chat-template=/etc/templates/falcon-template.jinja
         env:
         - name: PORT
           value: "8000"
         volumeMounts:
         - mountPath: /dev/shm
           name: dshm
-        - mountPath: /data
-          name: data
+        - name: template-volume
+          mountPath: /etc/templates
       volumes:
       - name: dshm
         emptyDir:
           medium: Memory
-      - name: data
-        hostPath:
-          path: /data
+      - name: template-volume
+        configMap:
+          name: my-templates
 ---
 apiVersion: v1
 kind: Service
@@ -53,3 +54,25 @@ spec:
   - port: 8090  # The port that the service will be exposed on internally
     targetPort: 8000  # The port that your application is listening on in the Pod
     nodePort: 30900 # The port that will be exposed on each Node's IP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-templates
+data:
+  falcon-template.jinja: |
+    {%- for message in messages -%}
+        {%- if message['role'] == 'user' -%}
+            {{- 'User: ' + message['content'] -}}
+        {%- elif message['role'] == 'assistant' -%}
+            {{- 'Assistant: ' + message['content'] -}}
+        {%- endif -%}
+        {%- if (loop.last and add_generation_prompt) or not loop.last -%}
+            {{- '\n' -}}
+        {%- endif -%}
+    {%- endfor -%}
+
+
+    {%- if add_generation_prompt and messages[-1]['role'] != 'assistant' -%}
+        {{- 'Assistant:' -}}
+    {% endif %}

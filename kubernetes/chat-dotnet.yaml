@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-dotnet-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-dotnet
+  template:
+    metadata:
+      labels:
+        app: chat-dotnet
+    spec:
+      imagePullPolicy: IfNotPresent
+      containers:
+      - name: chat-dotnet
+        image: chat-dotnet:latest
+        ports:
+        - name: http
+          containerPort: 8084
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://${ASPIRE_IP}:18889"
+        - name: OTEL_SERVICE_NAME
+          value: "chat"
+        - name: OTEL_METRIC_EXPORT_INTERVAL
+          value: "5000"
+        - name: ASPNETCORE_URLS
+          value: "http://+:8084"
+        - name: OpenAI__ApiKey
+          value: "token123"
+        - name: OpenAI__Endpoint
+          value: "http://vllm-svc:8090/v1"
+        - name: OpenAI__Model
+          value: "tiiuae/falcon-7b-instruct"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-dotnet
+spec:
+  type: NodePort
+  ports:
+  - nodePort: 30902
+    port: 8084
+    targetPort: 8084
+  selector:
+    app: chat-dotnet
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: chat-dotnet
+  labels:
+    team: frontend
+spec:
+  selector:
+    matchLabels:
+      app: chat-dotnet
+  podMetricsEndpoints:
+  - port: http

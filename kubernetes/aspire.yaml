@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspire-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspire
+  template:
+    metadata:
+      labels:
+        app: aspire
+    spec:
+      containers:
+      - name: aspire
+        image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest
+        ports:
+        - name: http
+          containerPort: 18888
+          hostPort: 18888
+        - name: another-port
+          containerPort: 18889
+        env:
+        - name: DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS
+          value: "true"

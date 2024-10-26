@@ -157,7 +157,21 @@ kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta2/namespaces/default/pods/*
 kubectl apply -f hpa.yaml
 ```
 
-7. Generate load using benchmarking
+7. Deploy the aspire dashboard.
+```
+kubectl apply -f aspire.yaml
+```
+Once the aspire dashboard runs, copy the IP address of the pod by running 
+`kubectl get po -o yaml | grep ip` and update the
+`${ASPIRE_IP}` variable in `chat-dotnet.yaml` with that value.
+
+8. Deploy the dotnet chat client.
+```
+kubectl apply -f chat-dotnet.yaml
+```
+
+9. Access the chat application using http://localhost:30902 and send requests or
+generate load using benchmarking
 ```
 git clone git@github.com:vllm-project/vllm.git
 cd vllm/benchmarks
@@ -168,15 +182,19 @@ pip install numpy aiohttp huggingface_hub transformers datasets Pillow
 python3 benchmark_serving.py --model=tiiuae/falcon-7b --dataset-path=ShareGPT_V3_unfiltered_cleaned_split.json --dataset-name=sharegpt --tokenizer=tiiuae/falcon-7b --num-prompts=5000 --request-rate=10 --port=30900
 ```
 
-8. Watch it autoscale
+10. Watch it autoscale
 ```
 kubectl describe hpa
 ```
 
-9. Visualize the metrics
+11. Visualize the metrics
 You can access Prometheus at http://localhost:30901
 You can access Grafana at http://localhost:3000
 
-10. Create a grafana dashboard for vllm metrics
+10. Create a grafana dashboard for visualizing metrics
+
 You can import `grafana/gen-ai-server-dashboard.json` via the grafana ui to see
 vllm metrics and how it changes with autoscaling.
+
+You can import `grafana/gen-ai-client-dashboard.json` via the grafana ui to see
+the chat-dotnet client metrics.
